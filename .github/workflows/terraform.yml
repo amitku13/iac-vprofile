@@ -13,7 +13,6 @@ on:
       - terraform/**
 
 env:
-  # Credentials for deployment to AWS
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
@@ -32,6 +31,13 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Debug Environment Variables
+        run: |
+          echo "AWS_REGION=$AWS_REGION"
+          echo "BUCKET_TF_STATE=$BUCKET_TF_STATE"
+          echo "Directory Contents:"
+          ls -l ./terraform
 
       - name: Setup Terraform with Specified Version
         uses: hashicorp/setup-terraform@v2
@@ -56,13 +62,11 @@ jobs:
         id: plan
         run: |
           terraform plan -no-color -input=false -out planfile
-        continue-on-error: true
+        continue-on-error: false
 
-      - name: Check Terraform Plan Status
+      - name: Check Terraform Plan File
         run: |
           if [ ! -f planfile ]; then
-            echo "Terraform plan failed. Exiting."
+            echo "Terraform plan file was not created. Exiting."
             exit 1
-          else
-            echo "Terraform plan succeeded."
           fi
